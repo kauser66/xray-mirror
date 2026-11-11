@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#02050a">
+<title>X-Ray Mirror</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#02050a;--glass:rgba(7,13,24,.8);--line:rgba(140,195,255,.2);--ac:#6fe6ff;--tx:#e9f3ff;--mut:#8da4c2}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+#cv{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+#vid{display:none}
+header{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;z-index:5;pointer-events:none}
+header>*{pointer-events:auto}
+.brand{font-weight:700;letter-spacing:.3px;display:flex;align-items:center;gap:8px;text-shadow:0 1px 8px #000}
+.brand i{width:9px;height:9px;border-radius:50%;background:var(--ac);box-shadow:0 0 12px var(--ac)}
+.tools{display:flex;gap:8px}
+.ib{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--glass);display:grid;place-items:center;backdrop-filter:blur(10px)}
+.ib svg{width:19px;height:19px;stroke:var(--tx);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ib:focus-visible,.chip:focus-visible,.seg button:focus-visible,#go:focus-visible,.link:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+#pill{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);transform:translateX(-50%);padding:9px 16px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px);font-weight:600;font-size:13px;z-index:4;white-space:nowrap;transition:opacity .4s}
+#pill.hide{opacity:0;pointer-events:none}
+#profile{position:fixed;left:10px;top:calc(env(safe-area-inset-top,0px) + 58px);width:218px;padding:12px 14px;border-radius:16px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);z-index:5;font-size:12.5px}
+#profile[hidden]{display:none}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.pr{margin:8px 0}.pr div{display:flex;justify-content:space-between;gap:8px}.pr span{color:var(--mut)}
+.pr i{display:block;height:3px;border-radius:2px;background:#ffffff16;margin-top:4px}.pr u{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#3aa8ff,var(--ac))}
+.pn{margin:10px 0 0;font-size:11px;color:var(--mut)}
+#track{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 58px);font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;color:#b9e9ff;background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:none;z-index:5;white-space:pre}
+#panel{position:fixed;left:0;right:0;bottom:0;max-height:50vh;overflow:auto;background:var(--glass);backdrop-filter:blur(16px);border-top:1px solid var(--line);border-radius:20px 20px 0 0;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);transform:translateY(105%);transition:transform .28s ease;z-index:6;max-width:560px;margin:0 auto}
+#panel.open{transform:none}
+#panel h3{margin:14px 0 8px;font-size:12px;font-weight:600;color:var(--mut)}
+#panel h3:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:#ffffff08;color:var(--mut)}
+.chip.on{background:#6fe6ff22;border-color:var(--ac);color:var(--tx)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;border-radius:12px;background:#ffffff0a;border:1px solid var(--line)}
+.seg button{padding:8px 4px;border:0;border-radius:9px;background:none;color:var(--mut);font-size:13px}
+.seg button.on{background:#6fe6ff26;color:var(--tx)}
+.row{display:grid;grid-template-columns:92px 1fr 44px;align-items:center;gap:10px;margin:6px 0;color:var(--mut)}
+.row output{text-align:right;font-variant-numeric:tabular-nums;color:var(--tx)}
+input[type=range]{width:100%;accent-color:var(--ac)}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;color:var(--mut);gap:8px;flex-wrap:wrap}
+.foot label{display:flex;gap:8px;align-items:center}
+.link{background:none;border:0;color:var(--ac);padding:6px}
+#start{position:fixed;inset:0;z-index:10;display:grid;place-items:center;padding:24px;background:radial-gradient(120% 80% at 50% 0%,#0c2a44 0%,#02050a 68%)}
+.card{max-width:400px;width:100%}
+.card h1{font-size:36px;line-height:1.05;margin:0 0 12px;font-weight:700;letter-spacing:-.8px}
+.card p{margin:0 0 14px;color:var(--mut)}
+.feat{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px}
+.feat li{padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:#ffffff08}
+.feat b{display:block;font-weight:600}.feat span{color:var(--mut);font-size:13px}
+#go{width:100%;padding:15px;border-radius:14px;border:0;background:var(--ac);color:#03121a;font-weight:700;font-size:16px}
+#go[disabled]{opacity:.6}
+#msg{min-height:20px;margin-top:12px;font-size:13px;color:#ffb4b4}
+#msg.ok{color:var(--mut)}
+.note{font-size:12px;color:var(--mut);margin-top:14px}
+@media (prefers-reduced-motion:reduce){#panel,#pill{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<video id="vid" playsinline muted></video>
+
+<header>
+  <div class="brand"><i></i>X-Ray Mirror</div>
+  <div class="tools">
+    <button class="ib" id="fit" aria-label="Fit or fill screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button class="ib" id="flip" aria-label="Switch camera"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><path d="M9 13a3 3 0 0 1 5.2-2M15 13a3 3 0 0 1-5.2 2"/></svg></button>
+    <button class="ib" id="snap" aria-label="Save image"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></button>
+    <button class="ib" id="menu" aria-label="Controls"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button>
+  </div>
+</header>
+
+<div id="pill" class="hide"></div>
+
+<section id="profile" hidden>
+  <div class="ph"><b>Skull profile</b><button class="link" id="pclose">Hide</button></div>
+  <div id="prows"></div>
+  <p class="pn">Estimated from 2D face landmarks. A visual guide, not a medical measurement.</p>
+</section>
+<pre id="track"></pre>
+
+<section id="panel" aria-label="Controls">
+  <h3>Quick view</h3>
+  <div class="seg" id="presets"><button data-v="skull">Skull</button><button data-v="brain">Brain</button><button data-v="muscles">Muscles</button><button data-v="all" class="on">Everything</button></div>
+  <h3>Layers</h3>
+  <div class="chips" id="layers">
+    <button class="chip on" data-k="body">Body skeleton</button>
+    <button class="chip on" data-k="skull">Skull</button>
+    <button class="chip on" data-k="brain">Brain</button>
+    <button class="chip on" data-k="muscles">Muscles</button>
+    <button class="chip on" data-k="spine">Spine</button>
+    <button class="chip on" data-k="eyes">Eyes</button>
+    <button class="chip on" data-k="hands">Hand bones</button>
+    <button class="chip on" data-k="labels">Labels</button>
+  </div>
+  <h3>Look</h3>
+  <div class="seg" id="look"><button class="on" data-v="xray">X-ray</button><button data-v="solid">Solid bone</button></div>
+  <div class="row"><span>Opacity</span><input type="range" id="opacity" min="20" max="100" value="90"><output></output></div>
+  <h3>Fine-tune fit</h3>
+  <div class="row"><span>Size</span><input type="range" id="size" min="70" max="150" value="100"><output></output></div>
+  <div class="row"><span>Left / right</span><input type="range" id="ox" min="-30" max="30" value="0"><output></output></div>
+  <div class="row"><span>Up / down</span><input type="range" id="oy" min="-30" max="30" value="0"><output></output></div>
+  <h3>Performance</h3>
+  <div class="seg" id="perf"><button class="on" data-v="smooth">Smooth</button><button data-v="lite">Lite (saves battery)</button></div>
+  <div class="foot">
+    <label><input type="checkbox" id="trk"> Tracking data</label>
+    <button class="link" id="rescan">Rescan my face</button>
+    <button class="link" id="reset">Reset fit</button>
+  </div>
+</section>
+
+<div id="start">
+  <div class="card">
+    <h1>X-Ray Mirror</h1>
+    <p>Point the front or back camera at yourself. Every body part in view gets an X-ray skeleton that follows your own proportions.</p>
+    <ul class="feat">
+      <li><b>Face-adaptive skull</b><span>Forehead, jaw, chin and nose are measured per person</span></li>
+      <li><b>Skull to feet</b><span>Spine, ribs, arms, pelvis, legs and hands with labels</span></li>
+      <li><b>Only what the camera sees</b><span>Step back for the full body, move close for the face</span></li>
+    </ul>
+    <button id="go">Start camera</button>
+    <div id="msg" class="ok"></div>
+    <div class="note">A visual effect, not a medical scan. Video stays on your device and is never uploaded.</div>
+  </div>
+</div>
+
+<script type="module">
+import {FilesetResolver,FaceLandmarker,HandLandmarker,PoseLandmarker} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+const WASM="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+const FACE="https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+const HAND="https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+
+const $=s=>document.querySelector(s);
+const cv=$("#cv"),ctx=cv.getContext("2d"),vid=$("#vid");
+const POSE="https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+const S={body:1,skull:1,brain:1,muscles:1,spine:1,eyes:1,hands:1,labels:1,xray:true,opacity:.9,size:1,ox:0,oy:0,lite:false,facing:"user"};
+let fl,hl,pz,stream,face=null,hands=[],pose=null,frame=0,fc=0,ft=performance.now(),W=0,H=0,mirror=true,lastPill="";
+
+/* ---------- UI ---------- */
+const panel=$("#panel");
+$("#menu").onclick=()=>panel.classList.toggle("open");
+const chips=[...document.querySelectorAll("#layers .chip")];
+const syncChips=()=>chips.forEach(b=>b.classList.toggle("on",!!S[b.dataset.k]));
+chips.forEach(b=>b.onclick=()=>{S[b.dataset.k]=S[b.dataset.k]?0:1;syncChips();document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("on"))});
+const seg=(id,fn)=>document.querySelectorAll(id+" button").forEach(b=>b.onclick=()=>{document.querySelectorAll(id+" button").forEach(x=>x.classList.remove("on"));b.classList.add("on");fn(b.dataset.v)});
+const PRE={skull:{body:0,skull:1,eyes:1,spine:1,brain:0,muscles:0},brain:{body:0,skull:1,brain:1,eyes:0,spine:0,muscles:0},muscles:{body:0,muscles:1,skull:0,brain:0,eyes:1,spine:0},all:{body:1,skull:1,brain:1,eyes:1,muscles:1,spine:1}};
+seg("#presets",v=>{Object.assign(S,PRE[v]);syncChips()});
+seg("#look",v=>S.xray=v==="xray");
+seg("#perf",v=>S.lite=v==="lite");
+const sl=(id,fn,fmt)=>{const el=$("#"+id),o=el.nextElementSibling,f=()=>{fn(+el.value);o.textContent=fmt(+el.value)};el.oninput=f;f()};
+sl("opacity",v=>S.opacity=v/100,v=>v+"%");sl("size",v=>S.size=v/100,v=>v+"%");sl("ox",v=>S.ox=v/100,v=>v);sl("oy",v=>S.oy=v/100,v=>v);
+$("#reset").onclick=()=>["size","ox","oy"].forEach(id=>{const e=$("#"+id);e.value=id==="size"?100:0;e.oninput()});
+$("#trk").onchange=e=>$("#track").style.display=e.target.checked?"block":"none";
+$("#flip").onclick=async()=>{S.facing=S.facing==="user"?"environment":"user";try{await openCam()}catch(e){S.facing="user";await openCam()}};
+$("#fit").onclick=()=>{cv.style.objectFit=cv.style.objectFit==="cover"?"contain":"cover"};
+$("#snap").onclick=()=>cv.toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="xray-mirror.png";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)},"image/png");
+$("#pclose").onclick=()=>$("#profile").hidden=true;
+$("#rescan").onclick=()=>{M.locked=null;M.acc=null;M.cur=null;$("#profile").hidden=true;panel.classList.remove("open")};
+
+/* ---------- Camera and models ---------- */
+async function openCam(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:S.facing,width:{ideal:1280},height:{ideal:960}},audio:false});
+  const tr=stream.getVideoTracks()[0];
+  try{const c=tr.getCapabilities&&tr.getCapabilities();if(c&&c.zoom)await tr.applyConstraints({advanced:[{zoom:c.zoom.min}]})}catch(e){}
+  vid.srcObject=stream;await vid.play();
+}
+async function loadModels(){
+  const fs=await FilesetResolver.forVisionTasks(WASM);
+  const mk=async(C,url,o)=>{for(const d of ["GPU","CPU"]){try{return await C.createFromOptions(fs,{baseOptions:{modelAssetPath:url,delegate:d},runningMode:"VIDEO",...o})}catch(e){}}throw new Error("model")};
+  fl=await mk(FaceLandmarker,FACE,{numFaces:1});
+  hl=await mk(HandLandmarker,HAND,{numHands:2});
+  pz=await mk(PoseLandmarker,POSE,{numPoses:1});
+}
+const msg=(t,ok)=>{const m=$("#msg");m.textContent=t;m.className=ok?"ok":""};
+$("#go").onclick=async()=>{
+  const b=$("#go");
+  if(!window.isSecureContext||!navigator.mediaDevices){msg("The camera needs a secure (https) link. Open this page from GitHub Pages or localhost.");return}
+  b.disabled=true;
+  try{
+    msg("Starting camera…",true);await openCam();
+    msg("Loading tracking models (a few seconds the first time)…",true);await loadModels();
+    $("#start").remove();requestAnimationFrame(loop);
+  }catch(e){
+    b.disabled=false;
+    msg(e&&e.name==="NotAllowedError"?"Camera access was blocked. Allow the camera in browser settings and try again.":"Could not start. Check your internet connection and camera, then try again.");
+  }
+};
+
+/* ---------- Helpers ---------- */
+const P=l=>({x:(mirror?1-l.x:l.x)*W,y:l.y*H});
+const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+const lerp=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function smooth(pts,closed,cont){
+  const n=pts.length;if(n<2)return;
+  if(closed){const m=mid(pts[n-1],pts[0]);cont?ctx.lineTo(m.x,m.y):ctx.moveTo(m.x,m.y);for(let i=0;i<n;i++){const a=pts[i],q=mid(a,pts[(i+1)%n]);ctx.quadraticCurveTo(a.x,a.y,q.x,q.y)}ctx.closePath()}
+  else{cont?ctx.lineTo(pts[0].x,pts[0].y):ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<n-1;i++){const q=mid(pts[i],pts[i+1]);ctx.quadraticCurveTo(pts[i].x,pts[i].y,q.x,q.y)}ctx.lineTo(pts[n-1].x,pts[n-1].y)}
+}
+const path=(pts,closed)=>{ctx.beginPath();smooth(pts,closed,false)};
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+const pal=()=>S.xray
+  ?{f0:"rgba(222,242,255,.34)",f1:"rgba(110,170,235,.10)",line:"rgba(240,249,255,.96)",soft:"rgba(180,215,255,.5)",glow:"rgba(80,165,255,.28)",dark:"rgba(0,9,28,.74)",tooth:"rgba(246,251,255,.66)",hand:"rgba(215,238,255,.5)"}
+  :{f0:"rgba(246,238,218,1)",f1:"rgba(222,208,178,1)",line:"rgba(104,86,58,1)",soft:"rgba(140,124,92,.8)",glow:"rgba(0,0,0,0)",dark:"rgba(42,30,22,.96)",tooth:"rgba(253,251,244,1)",hand:"rgba(240,232,210,1)"};
+function bone(C,w){if(S.xray){ctx.save();ctx.strokeStyle=C.glow;ctx.lineWidth=w*3.2;ctx.stroke();ctx.restore()}ctx.strokeStyle=C.line;ctx.lineWidth=w;ctx.stroke()}
+
+/* ---------- Face scan and per-person profile ---------- */
+const M={acc:null,cur:null,locked:null,hint:""},SCAN_N=36;
+const DEF={len:1.35,jaw:.8,fore:.8,third:.34,chin:.3,nose:.27,eyes:1.05,cheek:.9};
+const PM=()=>M.locked||M.cur||DEF;
+function measure(lm){
+  const d=(a,b)=>Math.hypot((lm[a].x-lm[b].x)*W,(lm[a].y-lm[b].y)*H);
+  const fw=d(234,454),fh=d(10,152);
+  return {len:fh/fw,jaw:d(58,288)/fw,fore:d(54,284)/fw,third:d(10,168)/fh,chin:d(149,378)/fw,nose:d(129,358)/fw,eyes:d(133,362)/d(33,133),cheek:d(116,345)/fw};
+}
+function yaw(lm){const a=Math.hypot((lm[1].x-lm[234].x)*W,(lm[1].y-lm[234].y)*H),b=Math.hypot((lm[1].x-lm[454].x)*W,(lm[1].y-lm[454].y)*H);return a/b}
+function scanStep(lm){
+  if(M.locked)return;
+  const y=yaw(lm);
+  if(y<.85||y>1.18){M.hint="Look straight at the camera";return}
+  M.hint="";
+  const cur=measure(lm);
+  if(!M.acc)M.acc={n:0,s:{}};
+  M.acc.n++;for(const k in cur)M.acc.s[k]=(M.acc.s[k]||0)+cur[k];
+  const avg={};for(const k in M.acc.s)avg[k]=M.acc.s[k]/M.acc.n;
+  M.cur=avg;
+  if(M.acc.n>=SCAN_N){M.locked=avg;showProfile(avg)}
+}
+const cls=(v,lo,hi,n)=>v<lo?n[0]:v>hi?n[2]:n[1];
+function profile(m){
+  const shape=m.len>=1.46?"Long":m.len<1.28?"Round":(m.jaw>=.84?"Square":(m.fore>m.jaw+.12&&m.chin<.27?"Heart":"Oval"));
+  return [
+    ["Face shape",shape,(m.len-1.1)/.5],
+    ["Forehead",cls(m.third,.30,.36,["Low","Medium","High"])+", "+cls(m.fore,.72,.82,["narrow","medium","broad"]),(m.fore-.6)/.35],
+    ["Jaw",cls(m.jaw,.74,.84,["Narrow","Medium","Wide"]),(m.jaw-.6)/.35],
+    ["Chin",cls(m.chin,.26,.33,["Pointed","Medium","Broad"]),(m.chin-.15)/.25],
+    ["Nose",cls(m.nose,.25,.30,["Narrow","Medium","Wide"]),(m.nose-.18)/.2],
+    ["Eyes",cls(m.eyes,.95,1.15,["Close-set","Average","Wide-set"]),(m.eyes-.8)/.5],
+    ["Cheekbones",cls(m.cheek,.86,.93,["Narrow","Medium","Prominent"]),(m.cheek-.75)/.25]
+  ];
+}
+function showProfile(m){
+  $("#prows").innerHTML=profile(m).map(r=>`<div class="pr"><div><span>${r[0]}</span><b>${r[1]}</b></div><i><u style="width:${Math.round(clamp(r[2],.06,1)*100)}%"></u></i></div>`).join("");
+  $("#profile").hidden=false;
+}
+
+/* ---------- Face rendering ---------- */
+const OVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+const MOUTH=[61,185,40,39,37,0,267,269,270,409,291,375,321,405,314,17,84,181,91,146];
+function drawFace(lm,labels,now){
+  const p=i=>P(lm[i]);
+  const A=p(234),B=p(454),E=p(168);
+  let vx=B.x-A.x,vy=B.y-A.y;if(vx<0){vx=-vx;vy=-vy}
+  const fw=Math.hypot(vx,vy),ex={x:vx/fw,y:vy/fw},ey={x:-ex.y,y:ex.x},ang=Math.atan2(ex.y,ex.x);
+  const off=(q,a,b)=>({x:q.x+(ex.x*a+ey.x*b)*fw,y:q.y+(ex.y*a+ey.y*b)*fw});
+  const pm=PM(),C=pal(),lw=Math.max(1.3,fw*.011);
+  const prog=M.locked?1:Math.min(1,(M.acc?M.acc.n:0)/SCAN_N);
+  const ox=S.ox*fw,oy=S.oy*fw;
+  const T=q=>({x:E.x+ox+(q.x-E.x)*S.size,y:E.y+oy+(q.y-E.y)*S.size});
+  const dome=clamp(.22+(pm.len-1.3)*.3,.16,.36);
+  const grow=q=>{const dx=q.x-E.x,dy=q.y-E.y,cy=dx*ey.x+dy*ey.y,cx=dx*ex.x+dy*ex.y;return cy>=0?q:off(q,cx/fw*.06,cy/fw*dome)};
+  const N=p(2),inset=(q,k)=>({x:N.x+(q.x-N.x)*k,y:N.y+(q.y-N.y)*k});
+  const eyeW=dist(p(33),p(133));
+  ctx.save();
+  ctx.translate(E.x+ox,E.y+oy);ctx.scale(S.size,S.size);ctx.translate(-E.x,-E.y);
+  ctx.lineJoin="round";ctx.lineCap="round";
+  ctx.globalAlpha=S.opacity*(.4+.6*prog);
+  const grad=ctx.createRadialGradient(E.x,E.y,fw*.1,E.x,E.y,fw*1.0);grad.addColorStop(0,C.f0);grad.addColorStop(1,C.f1);
+
+  /* muscles */
+  if(S.muscles){
+    const col=S.xray?"rgba(255,105,85,.55)":"rgba(185,58,48,.85)";
+    const fib=(a0,a1,b0,b1,n,bow)=>{for(let i=0;i<=n;i++){const s=i/n,u=lerp(a0,a1,s),v=lerp(b0,b1,s),c=off(lerp(u,v,.5),bow*(s-.5)*2,0);ctx.beginPath();ctx.moveTo(u.x,u.y);ctx.quadraticCurveTo(c.x,c.y,v.x,v.y);ctx.strokeStyle=col;ctx.lineWidth=lw*1.5;ctx.stroke()}};
+    fib(p(116),p(50),p(58),p(150),7,.04);fib(p(345),p(280),p(288),p(379),7,.04);
+    fib(grow(p(54)),p(127),p(116),p(234),6,.03);fib(grow(p(284)),p(356),p(345),p(454),6,.03);
+    fib(p(63),p(293),grow(p(103)),grow(p(332)),9,0);
+    for(const [a,b] of [[33,133],[362,263]]){const c=mid(p(a),p(b)),w=dist(p(a),p(b));for(const k of [1.05,1.35]){ctx.beginPath();ctx.ellipse(c.x,c.y,w*k,w*k*.72,ang,0,Math.PI*2);ctx.strokeStyle=col;ctx.lineWidth=lw*1.3;ctx.stroke()}}
+    const mc=mid(p(13),p(14));path(MOUTH.map(i=>{const q=p(i);return {x:mc.x+(q.x-mc.x)*1.5,y:mc.y+(q.y-mc.y)*1.5}}),true);
+    ctx.fillStyle=S.xray?"rgba(255,95,80,.18)":"rgba(185,58,48,.25)";ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=lw*1.5;ctx.stroke();
+  }
+
+  /* brain */
+  if(S.brain){
+    ctx.save();ctx.transform(ex.x*fw,ex.y*fw,ey.x*fw,ey.y*fw,E.x,E.y);
+    const t=now/1000,lwl=lw/fw;
+    const hemi=sx=>{ctx.beginPath();for(let a=0;a<=48;a++){const th=a/48*Math.PI*2,r=1+.05*Math.sin(th*6+sx)+.025*Math.sin(th*11),x=sx*.225+Math.cos(th)*.215*r,y=-.35+Math.sin(th)*.235*r;a?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.closePath()};
+    for(const sx of [-1,1]){
+      hemi(sx);const g=ctx.createRadialGradient(sx*.225,-.35,.02,sx*.225,-.35,.24);g.addColorStop(0,"rgba(255,175,210,.6)");g.addColorStop(1,"rgba(205,65,140,.3)");ctx.fillStyle=g;ctx.fill();
+      ctx.save();ctx.clip();ctx.strokeStyle="rgba(255,205,225,.7)";ctx.lineWidth=lwl*.8;
+      for(let k=-5;k<=5;k++){ctx.beginPath();for(let x=-.24;x<=.24;x+=.015){const y=-.35+k*.046+Math.sin(x*26+k*1.3+sx)*.014+Math.sin(t*1.4+k)*.002;x===-.24?ctx.moveTo(sx*.225+x,y):ctx.lineTo(sx*.225+x,y)}ctx.stroke()}
+      ctx.restore();hemi(sx);ctx.strokeStyle="rgba(255,180,215,.95)";ctx.lineWidth=lwl*1.1;ctx.stroke();
+    }
+    ctx.beginPath();ctx.moveTo(0,-.58);ctx.lineTo(0,-.13);ctx.strokeStyle="rgba(120,20,70,.7)";ctx.lineWidth=lwl*1.6;ctx.stroke();
+    ctx.restore();
+  }
+
+  /* cervical spine */
+  if(S.spine&&!bodyDrawn){
+    const b0=off(p(152),0,.14);
+    for(let i=0;i<6;i++){const c=off(b0,0,.05+i*.12),w=(.30+i*.025)*fw,h=.085*fw;
+      ctx.save();ctx.translate(c.x,c.y);ctx.rotate(ang);rr(-w/2,-h/2,w,h,h*.35);ctx.fillStyle=C.f0;ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=lw;ctx.stroke();ctx.restore()}
+  }
+
+  /* skull */
+  if(S.skull){
+    const ring=OVAL.map(i=>grow(p(i)));
+    path(ring,true);ctx.fillStyle=grad;ctx.fill();bone(C,lw*1.5);
+    const C0=off(E,0,-.3);
+    const upper=[127,162,21,54,103,67,109,10,338,297,332,284,251,389,356].map(i=>{const q=grow(p(i));return {x:C0.x+(q.x-C0.x)*.9,y:C0.y+(q.y-C0.y)*.9}});
+    path(upper,false);ctx.strokeStyle=C.soft;ctx.lineWidth=lw;ctx.stroke();
+    ctx.setLineDash([lw*3,lw*3]);const top=off(grow(p(10)),0,.2);
+    path([grow(p(21)),top,grow(p(251))],false);ctx.strokeStyle=C.soft;ctx.lineWidth=lw*.9;ctx.stroke();ctx.setLineDash([]);
+
+    /* mandible, shaped by this person's jaw */
+    const kIn=clamp(.82+(.8-pm.jaw)*.2,.76,.88);
+    for(const J of [[234,93,132,58,172,136,150,149,176,148,152],[454,323,361,288,397,365,379,378,400,377,152]]){
+      const outer=J.map(i=>inset(p(i),.97)),inner=J.map(i=>inset(p(i),kIn)).reverse();
+      ctx.beginPath();smooth(outer,false,false);smooth(inner,false,true);ctx.closePath();ctx.fillStyle=C.f0;ctx.fill();
+      path(inner.slice().reverse(),false);ctx.strokeStyle=C.soft;ctx.lineWidth=lw;ctx.stroke();
+      path(outer,false);bone(C,lw*1.4);
+    }
+    const cw=clamp(pm.chin/.3,.7,1.3);
+    path([inset(p(176),.97),off(inset(p(152),.97),0,.012*cw),inset(p(400),.97)],false);ctx.strokeStyle=C.line;ctx.lineWidth=lw;ctx.stroke();
+
+    /* cheekbones and nasal bones */
+    for(const ids of [[227,116,123,50,205],[447,345,352,280,425]]){path(ids.map(p),false);bone(C,lw*1.3)}
+    const T0=mid(p(6),p(1));
+    path([p(168),T0],false);ctx.strokeStyle=C.soft;ctx.lineWidth=lw;ctx.stroke();
+
+    /* brow ridge */
+    const brow=[46,53,52,65,55,168,285,295,282,283,276].map(i=>off(p(i),0,-.015));
+    path(brow,false);ctx.strokeStyle=C.soft;ctx.lineWidth=lw*3.4;ctx.globalAlpha*=.5;ctx.stroke();ctx.globalAlpha=S.opacity*(.4+.6*prog);
+    path(brow,false);ctx.strokeStyle=C.line;ctx.lineWidth=lw*1.1;ctx.stroke();
+
+    /* nasal aperture */
+    const NC=mid(p(6),p(2)),ni=q=>({x:NC.x+(q.x-NC.x)*.62,y:NC.y+(q.y-NC.y)*.62});
+    path([T0,p(209),p(129),p(98),p(2),p(327),p(358),p(429)].map(ni),true);ctx.fillStyle=C.dark;ctx.fill();bone(C,lw);
+
+    /* orbits (and eyeballs) */
+    for(const [a,b] of [[33,133],[362,263]]){
+      const m0=off(mid(p(a),p(b)),0,.012),rx=eyeW*.8,ry=eyeW*.72,pts=[];
+      for(let k=0;k<24;k++){const th=k/24*Math.PI*2,cx=Math.cos(th),sy=Math.sin(th),x=rx*Math.sign(cx)*Math.pow(Math.abs(cx),.78),y=ry*Math.sign(sy)*Math.pow(Math.abs(sy),.78);pts.push({x:m0.x+x*ex.x+y*ey.x,y:m0.y+x*ex.y+y*ey.y})}
+      path(pts,true);ctx.fillStyle=C.dark;ctx.fill();bone(C,lw*1.4);
+      if(S.eyes){
+        let ic=m0,ir=ry*.3;
+        if(lm.length>=478){const c1=p(468),c2=p(473);ic=dist(c1,m0)<dist(c2,m0)?c1:c2;const j=ic===c1?468:473;ir=Math.max(ry*.2,dist(p(j+1),p(j+3))/2)}
+        ctx.beginPath();ctx.arc(m0.x,m0.y,ry*.66,0,Math.PI*2);ctx.fillStyle=S.xray?"rgba(205,235,255,.5)":"rgba(250,250,250,.96)";ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=lw*.8;ctx.stroke();
+        ctx.beginPath();ctx.arc(ic.x,ic.y,ir*1.15,0,Math.PI*2);ctx.fillStyle="rgba(95,225,255,.9)";ctx.fill();
+        ctx.beginPath();ctx.arc(ic.x,ic.y,ir*.5,0,Math.PI*2);ctx.fillStyle="rgba(0,10,25,.95)";ctx.fill();
+      }
+    }
+
+    /* maxilla and teeth */
+    path([61,185,40,39,37,0,267,269,270,409,291].map(i=>off(p(i),0,-.05)),false);ctx.strokeStyle=C.soft;ctx.lineWidth=lw*1.2;ctx.stroke();
+    const m0=p(61),m1=p(291),u=p(13),d=p(14),mw=dist(m0,m1),tw=mw/10.5,th=tw*1.35;
+    const bez=(a,c,b,t)=>({x:(1-t)*(1-t)*a.x+2*(1-t)*t*c.x+t*t*b.x,y:(1-t)*(1-t)*a.y+2*(1-t)*t*c.y+t*t*b.y});
+    const cu={x:2*u.x-(m0.x+m1.x)/2,y:2*u.y-(m0.y+m1.y)/2},cd={x:2*d.x-(m0.x+m1.x)/2,y:2*d.y-(m0.y+m1.y)/2};
+    const wm=[.8,.85,.95,1.15,1.2,1.2,1.15,.95,.85,.8];
+    for(let i=0;i<10;i++){const t=(i+.5)/10;
+      for(const [ctl,low] of [[cu,0],[cd,1]]){const q=bez(m0,ctl,m1,t),w=tw*wm[i];
+        ctx.save();ctx.translate(q.x,q.y);ctx.rotate(ang);
+        if(!low){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-th*.7);ctx.strokeStyle=C.soft;ctx.lineWidth=lw*.9;ctx.stroke()}
+        rr(-w*.47,low?-th*.95:0,w*.94,th*.95,w*.22);ctx.fillStyle=C.tooth;ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=lw*.7;ctx.stroke();ctx.restore()}}
+  }
+
+  /* eyeballs alone when skull is hidden */
+  if(S.eyes&&!S.skull&&lm.length>=478){
+    for(const [i,a,b] of [[468,33,133],[473,362,263]]){const c=p(i),r=dist(p(a),p(b))*.3;
+      ctx.beginPath();ctx.arc(c.x,c.y,r,0,Math.PI*2);ctx.fillStyle="rgba(110,225,255,.65)";ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=lw;ctx.stroke()}
+  }
+  ctx.restore();
+
+  if(S.labels){
+    const eyeC=mid(p(362),p(263));
+    if(S.skull)labels.push({p:T(grow(p(10))),t:"Frontal bone",s:"r"},{p:T(grow(p(284))),t:"Parietal bone",s:"r"},{p:T(eyeC),t:"Orbit",s:"r"},{p:T(p(6)),t:"Nasal bone",s:"r"},{p:T(p(345)),t:"Zygomatic bone",s:"r"},{p:T(p(164)),t:"Maxilla",s:"r"},{p:T(inset(p(365),.9)),t:"Mandible",s:"r"});
+    if(S.brain)labels.push({p:T(off(E,.2,-.38)),t:"Cerebrum",s:"r"});
+    if(S.muscles)labels.push({p:T(lerp(p(345),p(288),.5)),t:"Masseter",s:"r"},{p:T(grow(p(284))),t:"Temporalis",s:"r"});
+    if(S.spine&&!bodyDrawn)labels.push({p:T(off(p(152),0,.3)),t:"Cervical spine",s:"r"});
+  }
+}
+
+/* ---------- Hands ---------- */
+function boneShape(a,b,wa,wb,wm){
+  let dx=b.x-a.x,dy=b.y-a.y;const L=Math.hypot(dx,dy);if(L<3)return false;
+  const ux=dx/L,uy=dy/L,nx=-uy,ny=ux,g=L*.06;
+  a={x:a.x+ux*g,y:a.y+uy*g};b={x:b.x-ux*g,y:b.y-uy*g};
+  const m=mid(a,b),c=2*wm-.5*(wa+wb),tn=Math.atan2(ny,nx);
+  ctx.beginPath();ctx.moveTo(a.x+nx*wa,a.y+ny*wa);
+  ctx.quadraticCurveTo(m.x+nx*c,m.y+ny*c,b.x+nx*wb,b.y+ny*wb);
+  ctx.arc(b.x,b.y,wb,tn,tn-Math.PI,true);
+  ctx.quadraticCurveTo(m.x-nx*c,m.y-ny*c,a.x-nx*wa,a.y-ny*wa);
+  ctx.arc(a.x,a.y,wa,tn+Math.PI,tn,true);ctx.closePath();return true;
+}
+const SEGS=[[1,2,"m"],[2,3,"p"],[3,4,"d"],[0,5,"m"],[5,6,"p"],[6,7,"i"],[7,8,"d"],[0,9,"m"],[9,10,"p"],[10,11,"i"],[11,12,"d"],[0,13,"m"],[13,14,"p"],[14,15,"i"],[15,16,"d"],[0,17,"m"],[17,18,"p"],[18,19,"i"],[19,20,"d"]];
+function drawHand(lm,labels){
+  const p=lm.map(P),s=dist(p[0],p[9]),C=pal();
+  ctx.save();ctx.globalAlpha=S.opacity;ctx.lineJoin="round";ctx.lineCap="round";
+  const pc={x:(p[5].x+p[9].x+p[13].x+p[17].x)/4,y:(p[5].y+p[9].y+p[13].y+p[17].y)/4};
+  const dx=pc.x-p[0].x,dy=pc.y-p[0].y,px=-dy,py=dx,pw=dist(p[5],p[17]);
+  const lw=Math.max(1,s*.014);
+  /* carpals */
+  for(const [a,b,r] of [[.08,-.2,.09],[.08,.02,.1],[.08,.22,.085],[.24,-.24,.09],[.24,-.04,.1],[.24,.17,.095],[.37,-.1,.085],[.37,.12,.085]]){
+    const x=p[0].x+dx*a+px*b*(pw/s)*1.0,y=p[0].y+dy*a+py*b*(pw/s)*1.0;
+    ctx.beginPath();ctx.arc(x,y,s*r*.8,0,Math.PI*2);ctx.fillStyle=C.hand;ctx.fill();bone(C,lw)}
+  /* bones */
+  for(const [i,j,k] of SEGS){
+    const w=k==="m"?s*.075:k==="p"?s*.07:k==="i"?s*.058:s*.05;
+    if(boneShape(k==="m"&&i===0?lerp(p[0],p[j],.3):p[i],p[j],w*.95,w*1.05,w*.55)){
+      ctx.fillStyle=C.hand;ctx.fill();bone(C,lw);
+      if(S.xray){ctx.strokeStyle="rgba(70,110,190,.35)";ctx.lineWidth=lw*.8;ctx.beginPath();ctx.moveTo(p[i].x,p[i].y);ctx.lineTo(p[j].x,p[j].y);ctx.stroke()}
+    }
+  }
+  ctx.restore();
+  if(S.labels)labels.push({p:p[7],t:"Phalanges",s:"l"},{p:mid(p[0],p[9]),t:"Metacarpals",s:"l"},{p:{x:p[0].x+dx*.25,y:p[0].y+dy*.25},t:"Carpals",s:"l"});
+}
+
+/* ---------- Full body ---------- */
+let bodyDrawn=false;
+const vis=(l,i)=>{const q=l[i];return !!q&&(q.visibility===undefined||q.visibility>.5)&&q.x>-.05&&q.x<1.05&&q.y>-.05&&q.y<1.05};
+function drawBody(pl,fc,labels){
+  bodyDrawn=false;
+  const C=pal(),V=i=>vis(pl,i),p=i=>P(pl[i]);
+  const okS=V(11)&&V(12),hipsOK=V(23)&&V(24);
+  const sw=okS?dist(p(11),p(12)):(hipsOK?dist(p(23),p(24))*1.15:0);
+  if(!sw)return;
+  const lwB=Math.max(1.2,sw*.012);
+  const lab=(q,t)=>{if(S.labels)labels.push({p:q,t})};
+  ctx.save();ctx.globalAlpha=S.opacity;ctx.lineJoin="round";ctx.lineCap="round";
+  const fillBone=(a,b,w)=>{if(boneShape(a,b,w,w*1.08,w*.55)){ctx.fillStyle=C.hand;ctx.fill();bone(C,lwB)}};
+  const disc=(c,r)=>{ctx.beginPath();ctx.arc(c.x,c.y,r,0,Math.PI*2);ctx.fillStyle=C.hand;ctx.fill();bone(C,lwB)};
+  let d=null,Tl=0,mS=null;
+  if(okS){
+    const a=p(11),b=p(12);mS=mid(a,b);
+    if(hipsOK){const mH=mid(p(23),p(24)),t=dist(mS,mH);if(t>sw*.5){Tl=t;d={x:(mH.x-mS.x)/t,y:(mH.y-mS.y)/t}}}
+    if(!d){const sv={x:(b.x-a.x)/sw,y:(b.y-a.y)/sw};d={x:-sv.y,y:sv.x};if(d.y<0)d={x:-d.x,y:-d.y};Tl=sw*1.45}
+  }
+
+  /* torso: ribs, sternum, clavicles, spine, neck */
+  if(okS){
+    bodyDrawn=true;
+    const n={x:d.y,y:-d.x},Sp=t=>({x:mS.x+d.x*t*Tl,y:mS.y+d.y*t*Tl}),rot=Math.atan2(d.y,d.x)-Math.PI/2;
+    const vert=(c,w,h)=>{ctx.save();ctx.translate(c.x,c.y);ctx.rotate(rot);rr(-w/2,-h/2,w,h,h*.3);ctx.fillStyle=C.hand;ctx.fill();bone(C,lwB*.9);ctx.restore()};
+    const prof=[.55,.78,.92,1,1.04,1.04,1.02,.98,.92,.85,.78],base=sw*.36;
+    for(let r=0;r<11;r++){
+      const t=.04+r*.047,hw=base*prof[r],drop=.1+(r<7?r*.006:.02);
+      for(const sg of [-1,1]){
+        const o=(q,k)=>({x:q.x+n.x*sg*k,y:q.y+n.y*sg*k}),a0=Sp(t),a1=o(Sp(t+drop*.3),hw*1.85),a2=o(Sp(t+drop),hw*.1);
+        ctx.beginPath();ctx.moveTo(a0.x,a0.y);ctx.quadraticCurveTo(a1.x,a1.y,a2.x,a2.y);bone(C,Math.max(lwB*1.6,sw*.03));
+      }
+    }
+    lab({x:Sp(.26).x-n.x*base,y:Sp(.26).y-n.y*base},"Ribs");
+    const s0=Sp(.03),s1=Sp(.3);vert(mid(s0,s1),sw*.075,dist(s0,s1));lab(mid(s0,s1),"Sternum");
+    for(const i of [11,12]){
+      const sh=p(i),c=lerp(s0,sh,.5);
+      ctx.beginPath();ctx.moveTo(s0.x,s0.y);ctx.quadraticCurveTo(c.x-d.x*Tl*.05,c.y-d.y*Tl*.05,sh.x,sh.y);bone(C,Math.max(lwB*1.4,sw*.028));
+      disc(sh,sw*.07);
+    }
+    lab(lerp(s0,p(11),.6),"Clavicle");
+    if(S.spine){
+      for(let i=0;i<12;i++)vert(Sp(.02+i*.055),sw*(.09+.004*i),Tl*.05);
+      lab(Sp(.42),"Thoracic spine");
+      if(hipsOK){for(let i=0;i<5;i++)vert(Sp(.68+i*.062),sw*(.15+.004*i),Tl*.052);lab(Sp(.84),"Lumbar spine")}
+      const chin=fc?P(fc[152]):((V(0)&&V(9)&&V(10))?(()=>{const m=mid(p(9),p(10)),z=p(0);return {x:z.x+(m.x-z.x)*2.3,y:z.y+(m.y-z.y)*2.3}})():null);
+      if(chin){const bot=Sp(-.05),top=lerp(chin,bot,.3);for(let i=0;i<7;i++)vert(lerp(top,bot,(i+.5)/7),sw*(.095+.008*i),dist(top,bot)/7*.78);lab(lerp(top,bot,.5),"Cervical spine")}
+    }
+  }
+
+  /* arms */
+  for(const [s,e,w] of [[11,13,15],[12,14,16]]){
+    if(V(s)&&V(e)){const a=p(s),b=p(e),L=dist(a,b);fillBone(a,b,L*.075);lab(mid(a,b),"Humerus");disc(b,L*.07)}
+    if(V(e)&&V(w)){
+      const a=p(e),b=p(w),L=dist(a,b),u={x:(b.x-a.x)/L,y:(b.y-a.y)/L},nn={x:-u.y,y:u.x},o=L*.055;
+      fillBone({x:a.x+nn.x*o,y:a.y+nn.y*o},{x:b.x+nn.x*o,y:b.y+nn.y*o},L*.05);
+      fillBone({x:a.x-nn.x*o,y:a.y-nn.y*o},{x:b.x-nn.x*o,y:b.y-nn.y*o},L*.05);
+      lab(mid(a,b),"Radius & ulna");
+      if(S.hands&&!hands.some(h=>dist(P(h[0]),b)<sw*.3)){
+        for(const id of (w===15?[17,19,21]:[18,20,22]))if(V(id)){const q=p(id),Lq=dist(b,q),tip={x:q.x+(q.x-b.x)*.55,y:q.y+(q.y-b.y)*.55};fillBone(lerp(b,q,.15),q,Lq*.14);fillBone(q,tip,Lq*.1)}
+        disc(b,sw*.04);
+      }
+    }
+  }
+
+  /* pelvis */
+  if(hipsOK){
+    const a=p(23),b=p(24),H=mid(a,b),hw=dist(a,b);
+    let dd=d;if(!dd){const sv={x:(b.x-a.x)/hw,y:(b.y-a.y)/hw};dd={x:-sv.y,y:sv.x};if(dd.y<0)dd={x:-dd.x,y:-dd.y}}
+    const nn={x:dd.y,y:-dd.x},PT=(x,y)=>({x:H.x+nn.x*x*hw+dd.x*y*hw,y:H.y+nn.y*x*hw+dd.y*y*hw});
+    const half=[[.04,-.34],[.42,-.52],[.76,-.42],[.86,-.18],[.72,0],[.56,.08],[.46,.16],[.4,.38],[.22,.42],[.08,.28],[0,.22]];
+    path([...half.map(([x,y])=>PT(x,y)),...half.slice().reverse().map(([x,y])=>PT(-x,y))],true);ctx.fillStyle=C.f0;ctx.fill();bone(C,lwB*1.3);
+    const ra=Math.atan2(dd.y,dd.x)-Math.PI/2;
+    for(const sg of [-1,1]){const c=PT(sg*.3,.24);ctx.beginPath();ctx.ellipse(c.x,c.y,hw*.09,hw*.12,ra,0,Math.PI*2);ctx.fillStyle=C.dark;ctx.fill();ctx.strokeStyle=C.soft;ctx.lineWidth=lwB;ctx.stroke()}
+    path([PT(-.17,-.3),PT(.17,-.3),PT(.12,-.05),PT(0,.08),PT(-.12,-.05)],true);ctx.fillStyle=C.f0;ctx.fill();ctx.strokeStyle=C.soft;ctx.lineWidth=lwB*1.2;ctx.stroke();
+    disc(a,hw*.17);disc(b,hw*.17);
+    lab(PT(.7,-.3),"Pelvis (ilium)");lab(PT(0,-.12),"Sacrum");
+  }
+
+  /* legs and feet */
+  const ref=hipsOK?mid(p(23),p(24)):{x:W/2,y:0};
+  for(const [h,k,an,hl,tp] of [[23,25,27,29,31],[24,26,28,30,32]]){
+    if(V(h)&&V(k)){const a=p(h),b=p(k),L=dist(a,b);fillBone(a,b,L*.085);lab(mid(a,b),"Femur");disc(b,L*.065);lab(b,"Patella")}
+    if(V(k)&&V(an)){
+      const a=p(k),b=p(an),L=dist(a,b),u={x:(b.x-a.x)/L,y:(b.y-a.y)/L},nn={x:-u.y,y:u.x},sg=((a.x-ref.x)*nn.x+(a.y-ref.y)*nn.y)>=0?1:-1;
+      const o1=-sg*L*.025,o2=sg*L*.085;
+      fillBone({x:a.x+nn.x*o1,y:a.y+nn.y*o1},{x:b.x+nn.x*o1,y:b.y+nn.y*o1},L*.062);
+      fillBone({x:a.x+nn.x*o2,y:a.y+nn.y*o2},{x:b.x+nn.x*o2,y:b.y+nn.y*o2},L*.03);
+      lab(lerp(a,b,.5),"Tibia");lab({x:lerp(a,b,.6).x+nn.x*o2,y:lerp(a,b,.6).y+nn.y*o2},"Fibula");
+    }
+    if(V(an)&&V(tp)){
+      const f=p(an),t=p(tp),L=dist(f,t);
+      if(V(hl))disc(lerp(f,p(hl),.6),L*.12);
+      fillBone(lerp(f,t,.3),t,L*.12);lab(mid(f,t),"Foot bones");
+    }
+  }
+  ctx.restore();
+}
+function drawSkullLite(pl,labels){
+  const V=i=>vis(pl,i),p=i=>P(pl[i]);
+  if(!(V(0)&&V(2)&&V(5)))return;
+  const e1=p(2),e2=p(5),ed=dist(e1,e2);if(ed<4)return;
+  let ex={x:(e2.x-e1.x)/ed,y:(e2.y-e1.y)/ed};if(ex.x<0)ex={x:-ex.x,y:-ex.y};
+  const ey={x:-ex.y,y:ex.x},hw=ed*2.4,E=mid(e1,e2),C=pal(),lw=Math.max(1.2,hw*.02),an=Math.atan2(ex.y,ex.x);
+  const q=(a,b)=>({x:E.x+(ex.x*a+ey.x*b)*hw,y:E.y+(ex.y*a+ey.y*b)*hw});
+  ctx.save();ctx.globalAlpha=S.opacity;ctx.lineJoin="round";ctx.lineCap="round";
+  path([q(-.5,.02),q(-.48,-.35),q(-.28,-.62),q(0,-.7),q(.28,-.62),q(.48,-.35),q(.5,.02),q(.42,.3),q(.3,.52),q(.12,.68),q(0,.7),q(-.12,.68),q(-.3,.52),q(-.42,.3)],true);
+  ctx.fillStyle=C.f0;ctx.fill();bone(C,lw*1.4);
+  for(const sg of [-1,1]){const c=q(sg*.22,.02);ctx.beginPath();ctx.ellipse(c.x,c.y,hw*.13,hw*.12,an,0,Math.PI*2);ctx.fillStyle=C.dark;ctx.fill();bone(C,lw)}
+  path([q(0,.12),q(-.07,.3),q(0,.34),q(.07,.3)],true);ctx.fillStyle=C.dark;ctx.fill();bone(C,lw*.8);
+  for(let i=0;i<8;i++){const c=q(-.2+.4*i/7,.47);ctx.save();ctx.translate(c.x,c.y);ctx.rotate(an);rr(-hw*.026,0,hw*.052,hw*.075,hw*.012);ctx.fillStyle=C.tooth;ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=lw*.6;ctx.stroke();ctx.restore()}
+  ctx.restore();
+  if(S.labels)labels.push({p:q(.42,-.4),t:"Skull"});
+}
+
+/* ---------- Scene effects ---------- */
+function tone(){
+  if(!S.xray)return;
+  ctx.save();
+  ctx.globalCompositeOperation="saturation";ctx.globalAlpha=.92;ctx.fillStyle="#000";ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation="multiply";ctx.globalAlpha=.9;ctx.fillStyle="#5b8fd8";ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation="source-over";ctx.globalAlpha=.3;ctx.fillStyle="#010816";ctx.fillRect(0,0,W,H);
+  ctx.restore();
+}
+function post(){
+  const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,4,12,.55)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  if(S.xray){ctx.fillStyle="rgba(120,190,255,.035)";for(let y=0;y<H;y+=4)ctx.fillRect(0,y,W,1)}
+  const b=Math.min(W,H)*.05,m=Math.min(W,H)*.03;ctx.strokeStyle="rgba(111,230,255,.55)";ctx.lineWidth=2;ctx.lineCap="round";
+  for(const [x,y,sx,sy] of [[m,m,1,1],[W-m,m,-1,1],[m,H-m,1,-1],[W-m,H-m,-1,-1]]){ctx.beginPath();ctx.moveTo(x,y+sy*b);ctx.lineTo(x,y);ctx.lineTo(x+sx*b,y);ctx.stroke()}
+}
+function scanFx(lm,now){
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  for(const i of OVAL){const q=P(lm[i]);x0=Math.min(x0,q.x);x1=Math.max(x1,q.x);y0=Math.min(y0,q.y);y1=Math.max(y1,q.y)}
+  ctx.save();ctx.fillStyle="rgba(111,230,255,.85)";
+  for(const i of [...OVAL,...MOUTH,1,2,6,168,33,133,362,263,468,473]){if(!lm[i])continue;const q=P(lm[i]);ctx.beginPath();ctx.arc(q.x,q.y,Math.max(1.4,W*.0025),0,Math.PI*2);ctx.fill()}
+  const y=y0+(y1-y0)*((now%1600)/1600),g=ctx.createLinearGradient(0,y-20,0,y+4);g.addColorStop(0,"rgba(111,230,255,0)");g.addColorStop(1,"rgba(111,230,255,.45)");
+  ctx.fillStyle=g;ctx.fillRect(x0-12,y-20,x1-x0+24,24);ctx.fillStyle="rgba(190,245,255,.95)";ctx.fillRect(x0-12,y,x1-x0+24,2);
+  ctx.restore();
+}
+function drawLabels(items){
+  if(!items.length)return;
+  for(const it of items)if(!it.s)it.s=it.p.x<W/2?"l":"r";
+  const fs=Math.max(11,Math.round(Math.min(W,H)*.022));
+  ctx.font=`600 ${fs}px Manrope,system-ui,sans-serif`;ctx.textBaseline="middle";ctx.lineJoin="round";
+  for(const side of ["r","l"]){
+    const arr=items.filter(i=>i.s===side).sort((a,b)=>a.p.y-b.p.y);let last=-1e9;
+    for(const it of arr){it.ly=Math.min(Math.max(it.p.y,last+fs*1.7,fs*4),H-fs*3);last=it.ly}
+    for(const it of arr){
+      const tw=ctx.measureText(it.t).width,x0=side==="r"?W-10-tw:10,xe=side==="r"?x0-6:x0+tw+6;
+      ctx.beginPath();ctx.moveTo(it.p.x,it.p.y);ctx.lineTo(xe,it.ly);ctx.strokeStyle="rgba(170,228,255,.6)";ctx.lineWidth=1;ctx.stroke();
+      ctx.beginPath();ctx.arc(it.p.x,it.p.y,2.4,0,Math.PI*2);ctx.fillStyle="#a8ebff";ctx.fill();
+      ctx.lineWidth=3;ctx.strokeStyle="rgba(0,6,18,.85)";ctx.strokeText(it.t,x0,it.ly);ctx.fillStyle="#e6f6ff";ctx.fillText(it.t,x0,it.ly);
+    }
+  }
+}
+function setPill(t){
+  if(t===lastPill)return;lastPill=t;const el=$("#pill");
+  if(t){el.textContent=t;el.classList.remove("hide")}else el.classList.add("hide");
+}
+
+/* ---------- Main loop ---------- */
+function loop(){
+  requestAnimationFrame(loop);
+  if(vid.readyState<2||!vid.videoWidth)return;
+  const w=vid.videoWidth,h=vid.videoHeight;
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}
+  W=w;H=h;mirror=S.facing==="user";
+  const now=performance.now();
+  const sm=frame%(S.lite?3:2),run=f=>{try{f()}catch(e){}};
+  const dPose=()=>{const r=pz.detectForVideo(vid,now).landmarks[0]||null;pose=r?(pose&&pose.length===r.length?r.map((l,i)=>({x:pose[i].x+(l.x-pose[i].x)*.6,y:pose[i].y+(l.y-pose[i].y)*.6,visibility:l.visibility})):r):null};
+  const dFace=()=>{face=fl.detectForVideo(vid,now).faceLandmarks[0]||null};
+  const dHand=()=>{hands=hl.detectForVideo(vid,now).landmarks||[]};
+  if(S.lite){if(sm===0)run(dPose);else if(sm===1)run(dFace);else run(dHand)}
+  else{if(sm===0){run(dPose);run(dFace)}else run(dHand)}
+  frame++;
+  if(face)scanStep(face);
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";
+  ctx.save();if(mirror){ctx.translate(w,0);ctx.scale(-1,1)}ctx.drawImage(vid,0,0,w,h);ctx.restore();
+  tone();
+  const labels=[];
+  bodyDrawn=false;
+  if(S.body&&pose)drawBody(pose,face,labels);
+  if(S.hands)for(const hd of hands)drawHand(hd,labels);
+  if(face&&(S.skull||S.brain||S.eyes||S.muscles||S.spine))drawFace(face,labels,now);
+  else if(S.body&&S.skull&&pose)drawSkullLite(pose,labels);
+  if(face&&!M.locked)scanFx(face,now);
+  drawLabels(labels);post();
+  if(!face&&!M.locked)setPill(pose?"":"Show your face or body to the camera");
+  else if(!M.locked)setPill(M.hint||("Scanning your face… "+Math.round((M.acc?M.acc.n:0)/SCAN_N*100)+"%"));
+  else if(!M.shown){M.shown=now;setPill("Skull profile ready")}
+  else if(now-M.shown>3200)setPill("");
+  if(!M.locked)M.shown=0;
+  fc++;if(now-ft>=1000){const f=Math.round(fc*1000/(now-ft));fc=0;ft=now;
+    $("#track").textContent=`FPS    ${f}\nFace   ${face?"tracked":"not found"}\nBody   ${pose?"tracked":"not found"}\nHands  ${hands.length}\nVideo  ${w}x${h}\nMode   ${S.lite?"Lite":"Smooth"}`}
+}
+</script>
+</body>
+</html>
